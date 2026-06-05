@@ -34,7 +34,7 @@ State state = IDLE;
 unsigned long lastChange = 0;
 unsigned long lastChangeMusic = 0;
 const unsigned long interval = 200;
-const unsigned long track_length = 3000;
+const unsigned long track_length = 5000;
 
 
 void setup() {
@@ -65,51 +65,55 @@ void loop() {
   int sensorVal = analogRead(PinSensor);
   unsigned long now2 = millis();
 
-  switch (state) {
-    case IDLE:
-      patterServo.write(servoUp);
-      Serial.println("  IDLE");
+  if ((!held && ((PatThresh + PatHyst) < sensorVal)) && (now2 - lastChangeMusic > track_length)) {   
+      lastChangeMusic = now2;
+      player.play(track);  //(track) is the interger we named before - currently there is only one, but can be more.
+    }   // If pat is sensed (but its not just being held) and its not already playing then please play track. 
+
+
+
+
+switch (state) {
+  case IDLE:
+    patterServo.write(servoUp);
+    Serial.println("  IDLE");
+    Serial.println(sensorVal);
+    if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to patted state if pat is sensed (but not if someone is just holding sensor.)
+      lastChange = now;
+
+      state = PATTED;
+    } else if (held && (PatThresh - PatHyst) > sensorVal) {  // this switches it to being un held if someone was just holding the sensor
+      held = false;
+      Serial.println("   release");
       Serial.println(sensorVal);
-      if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to patted state if pat is sensed (but not if someone is just holding sensor.)
-        lastChange = now;
-        lastChangeMusic = now2;
-        state = PATTED;
-      } else if (held && (PatThresh - PatHyst) > sensorVal) {  // this switches it to being un held if someone was just holding the sensor
-        held = false;
-        Serial.println("   release");
-        Serial.println(sensorVal);
-        state = IDLE;
-      }
-      break;
+      state = IDLE;
+    }
+    break;
 
-    case PATTED:
-      patterServo.write(servoDown);  // in Patted state, move servo down to pat
-      Serial.println("  PATTED");
-      Serial.println(sensorVal);
-      held = true;
-
-      if (now2 - lastChangeMusic > track_length) {  //track_length is the duration of the audio(1)
-        lastChangeMusic = now2;
-
-        //(track) is the interger we named before - currently there is only one, but can be more.
-        player.play(track);
-      }
+  case PATTED:
+    patterServo.write(servoDown);  // in Patted state, move servo down to pat
+    Serial.println("  PATTED");
+    Serial.println(sensorVal);
+    held = true;
 
 
-      if (now - lastChange >= interval) {  // wait for servo to get there and move to state reset
-        state = RESET;
-        lastChange = now;
-      }
 
-      break;
-    case RESET:
-      patterServo.write(servoUp);  // Move servo back to starting position
-      Serial.println("  RESET");
-      Serial.println(sensorVal);
-      if (now - lastChange >= interval) {  // wait for servo to get there
-        state = IDLE;
-        lastChange = now;
-      }
-      break;
-  }
+
+    if (now - lastChange >= interval) {  // wait for servo to get there and move to state reset
+      state = RESET;
+      lastChange = now;
+    }
+
+    break;
+  case RESET:
+    patterServo.write(servoUp);  // Move servo back to starting position
+    Serial.println("  RESET");
+    Serial.println(sensorVal);
+    if (now - lastChange >= interval) {  // wait for servo to get there
+      state = IDLE;
+      lastChange = now;
+    }
+    break;
 }
+}
+
