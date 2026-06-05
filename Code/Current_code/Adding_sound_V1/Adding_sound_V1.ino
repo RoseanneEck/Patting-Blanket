@@ -88,8 +88,7 @@ void loop() {
   // Detect release
   if (held && sensorVal < (PatThresh - PatHyst)) {
     held = false;
-
-    Serial.println("RELEASE HELD");
+Serial.println("RELEASE HELD");
   }
 
   // ----------- 
@@ -111,23 +110,18 @@ switch (state) {
     patterServo.write(servoUpPos);
    // Serial.println("  IDLE"); // Can uncomment these for debug - will show what state it is in
    // Serial.println(sensorVal); // Can uncomment these for debug - will show sensor value 
-    if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to PAT_DOWN state if pat is sensed (but not if someone is just holding sensor.)
+    if (triggerPat) {  // Move to PAT_DOWN state if pat is sensed (but not if someone is just holding sensor.)
+      state = PAT_DOWN;
       lastChange = now;
 
-      state = PAT_DOWN;
-    } else if (held && (PatThresh - PatHyst) > sensorVal) {  // this switches it to being un held if someone was just holding the sensor
-      held = false;
-      Serial.println("   release");
-      Serial.println(sensorVal);
-      state = IDLE;
     }
     break;
 
   case PAT_DOWN:
     patterServo.write(servoDownPos);  // in PAT_DOWN state, move servo down to pat
-    Serial.println("  PAT_DOWN");
-    Serial.println(sensorVal);
-    held = true;
+   // Serial.println("  PAT_DOWN"); // for debugging
+   // Serial.println(sensorVal); // for debugging
+    
 
 
 
@@ -139,14 +133,41 @@ switch (state) {
 
     break;
   case PAT_UP:
-    patterServo.write(servoUp);  // Move servo back to starting position (It resets the servo)
-    Serial.println("  PAT_UP");
-    Serial.println(sensorVal);
+    patterServo.write(servoUpPos);  // Move servo back to starting position (It resets the servo)
+    //Serial.println("  PAT_UP"); // for debugging
+    //Serial.println(sensorVal); // for debugging
     if (now - lastChange >= interval) {  // wait for servo to get there
       state = IDLE;
       lastChange = now;
     }
     break;
 }
+
+// Debug output
+  Serial.print("Sensor: ");
+  Serial.print(sensorVal);
+
+  Serial.print("  Held: ");
+  Serial.print(held);
+
+  Serial.print("  State: ");
+
+  switch (state) {
+    case IDLE:
+      Serial.println("IDLE");
+      break;
+
+    case PAT_DOWN:
+      Serial.println("PAT_DOWN");
+      break;
+
+    case PAT_UP:
+      Serial.println("PAT_UP");
+      break;
+
+
+
+  }
+
 }
 
