@@ -23,12 +23,13 @@ int PatHyst = 20;    // a sort of debouce
 bool held = false;
 //int track = random(1,5);  // picks a number from 1 to 5 (for when I get more tracks)
 int track = 1;
+held = false;  // boolean based on weather a person if continuing to hold the sensor 
 
 // ---------------
 // Servo movement states 
 // --------------- 
 
-RESET
+
 enum State {
   IDLE,
   PAT_DOWN,
@@ -60,7 +61,8 @@ void setup() {
   }
 
   patterServo.attach(9); // pin the servo is attached to.
-  held = false;  // boolean based on weather a person if continuing to hold the sensor 
+  patterServo.write(servoUpPos); // make sure servo starts in the starting up position. 
+  
 }
 
 void loop() {
@@ -69,19 +71,46 @@ void loop() {
   int sensorVal = analogRead(PinSensor);
   unsigned long now2 = millis();
 
-  if ((!held && ((PatThresh + PatHyst) < sensorVal)) && (now2 - lastChangeMusic > track_length)) {   
+  // ----------------
+  // INPUT HANDLING 
+  // ----------
+
+  bool triggerPat = false; //Always set false in the loop so if it's set true at the next bit of logic it's only true for 1 frame.
+
+  // Detect NEW trigger only if not already held
+  if (!held && sensorVal > (PatThresh + PatHyst)) {
+    held = true;
+    triggerPat = true;
+
+    Serial.println("TRIGGER!");
+  }
+
+  // Detect release
+  if (held && sensorVal < (PatThresh - PatHyst)) {
+    held = false;
+
+    Serial.println("RELEASE HELD");
+  }
+
+  // ----------- 
+  // Triggering MP3 when a Pat is sensed 
+  // --------------
+
+  if (triggerPat) && (now2 - lastChangeMusic > track_length)) {   
       lastChangeMusic = now2;
       player.play(track);  //(track) is the interger we named before - currently there is only one, but can be more.
     }   // If pat is sensed (but its not just being held) and its not already playing then please play track. 
 
-
+// ----------------------------------------
+  // SERVO STATE MACHINE
+  // ----------------------------------------
 
 
 switch (state) {
   case IDLE:
     patterServo.write(servoUpPos);
-    Serial.println("  IDLE");
-    Serial.println(sensorVal);
+   // Serial.println("  IDLE"); // Can uncomment these for debug - will show what state it is in
+   // Serial.println(sensorVal); // Can uncomment these for debug - will show sensor value 
     if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to PAT_DOWN state if pat is sensed (but not if someone is just holding sensor.)
       lastChange = now;
 
