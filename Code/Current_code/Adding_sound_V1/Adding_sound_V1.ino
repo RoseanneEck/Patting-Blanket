@@ -14,20 +14,25 @@ DFRobotDFPlayerMini player;
 const byte PinSensor = A0;
 
 Servo patterServo;
-unsigned servoDown = 270;  // number to write to servo for it to be down.
-unsigned servoUp = 30;     // number to write to servo for it to be up.
+unsigned servoDownPos = 270;  // number to write to servo for it to be down.
+unsigned servoUpPos = 30;     // number to write to servo for it to be up.
 
 
 int PatThresh = 90;  // when sensor is triggered
 int PatHyst = 20;    // a sort of debouce
-bool held;
+bool held = false;
 //int track = random(1,5);  // picks a number from 1 to 5 (for when I get more tracks)
 int track = 1;
 
+// ---------------
+// Servo movement states 
+// --------------- 
+
+RESET
 enum State {
   IDLE,
-  PATTED,
-  RESET
+  PAT_DOWN,
+  PAT_UP
 };
 
 State state = IDLE;
@@ -40,23 +45,22 @@ const unsigned long track_length = 5000;
 void setup() {
 
   Serial.begin(9600);
-  // Init serial port for DFPlayer Mini
   softwareSerial.begin(9600);
-  // delay(1000);
+ 
 
-  // Start communication with DFPlayer Mini
-  if (player.begin(softwareSerial)) {
+ 
+  if (player.begin(softwareSerial)) { // Start communication with DFPlayer Mini (this plays the MP3 tracks)
 
-    Serial.println("OK");
+    Serial.println("OK"); // DFPlayer mini will print ok in the serial monitor if no issues 
 
     // Set volume to maximum (0 to 30).
     player.volume(20);
   } else {
-    Serial.println("Connecting to DFPlayer Mini failed!");
+    Serial.println("Connecting to DFPlayer Mini failed!"); 
   }
 
-  patterServo.attach(9);
-  held = false;
+  patterServo.attach(9); // pin the servo is attached to.
+  held = false;  // boolean based on weather a person if continuing to hold the sensor 
 }
 
 void loop() {
@@ -75,13 +79,13 @@ void loop() {
 
 switch (state) {
   case IDLE:
-    patterServo.write(servoUp);
+    patterServo.write(servoUpPos);
     Serial.println("  IDLE");
     Serial.println(sensorVal);
-    if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to patted state if pat is sensed (but not if someone is just holding sensor.)
+    if (!held && ((PatThresh + PatHyst) < sensorVal)) {  // Move to PAT_DOWN state if pat is sensed (but not if someone is just holding sensor.)
       lastChange = now;
 
-      state = PATTED;
+      state = PAT_DOWN;
     } else if (held && (PatThresh - PatHyst) > sensorVal) {  // this switches it to being un held if someone was just holding the sensor
       held = false;
       Serial.println("   release");
@@ -90,24 +94,24 @@ switch (state) {
     }
     break;
 
-  case PATTED:
-    patterServo.write(servoDown);  // in Patted state, move servo down to pat
-    Serial.println("  PATTED");
+  case PAT_DOWN:
+    patterServo.write(servoDownPos);  // in PAT_DOWN state, move servo down to pat
+    Serial.println("  PAT_DOWN");
     Serial.println(sensorVal);
     held = true;
 
 
 
 
-    if (now - lastChange >= interval) {  // wait for servo to get there and move to state reset
-      state = RESET;
+    if (now - lastChange >= interval) {  // wait for servo to get there and move to state PAT_UP
+      state = PAT_UP;
       lastChange = now;
     }
 
     break;
-  case RESET:
-    patterServo.write(servoUp);  // Move servo back to starting position
-    Serial.println("  RESET");
+  case PAT_UP:
+    patterServo.write(servoUp);  // Move servo back to starting position (It resets the servo)
+    Serial.println("  PAT_UP");
     Serial.println(sensorVal);
     if (now - lastChange >= interval) {  // wait for servo to get there
       state = IDLE;
