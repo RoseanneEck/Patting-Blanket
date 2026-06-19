@@ -14,7 +14,7 @@ DFRobotDFPlayerMini player;
 const byte PinSensor = A0;
 
 Servo patterServo;
-unsigned servoDownPos = 50;  // number to write to servo for it to be down.
+unsigned servoDownPos = 70;  // number to write to servo for it to be down.
 unsigned servoUpPos = 20;     // number to write to servo for it to be up.
 
 
