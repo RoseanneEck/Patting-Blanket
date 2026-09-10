@@ -1,11 +1,16 @@
+/* Code created by Roseanne Eckheart for Dr Paulina Yurman's project: Maternal Machines: Design Speculations about Fantasies of Care.
+https://www.arts.ac.uk/colleges/central-saint-martins/research-at-csm/maternal-machines
+Designed for a blanket which pats the wearer on the back as they pat a baby doll. The user wears the blanket over there shoulder and cradles a baby doll in there arms.  
+One human pat = one pat of servo motor. 
+*/
+
 #include <Servo.h>  // include servo libary
 #include "SoftwareSerial.h"
 
-// Useing 3 states. One human pat = pat of servo motor. 
 const byte PinSensor = A0;
 Servo patterServo;
 unsigned servoDownPos = 70;  // number to write to servo for it to be down.
-unsigned servoUpPos = 20;     // number to write to servo for it to be up.
+unsigned servoUpPos = 20;    // number to write to servo for it to be up.
 
 int PatThresh = 90;  // when sensor is triggered
 int PatHyst = 20;    // a sort of debouce
@@ -60,7 +65,7 @@ void loop() {
     held = false;
     Serial.println("RELEASE HELD");
   }
-                  
+
   // ----------------------------------------
   // SERVO STATE MACHINE
   // ----------------------------------------
