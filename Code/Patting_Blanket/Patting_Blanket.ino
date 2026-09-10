@@ -2,6 +2,8 @@
 https://www.arts.ac.uk/colleges/central-saint-martins/research-at-csm/maternal-machines
 Designed for a blanket which pats the wearer on the back as they pat a baby doll. The user wears the blanket over there shoulder and cradles a baby doll in there arms.  
 One human pat = one pat of servo motor. 
+This code is designed to work with one servo, and a hand made pressure sensor made from layers of conductive fabric and piezoresistive material based on kobakant's designs:
+https://www.kobakant.at/DIY/?cat=26
 */
 
 #include <Servo.h>  // include servo libary
@@ -36,7 +38,6 @@ const unsigned long interval = 200;
 void setup() {
 
   Serial.begin(9600);
-  softwareSerial.begin(9600);
   patterServo.attach(9);          // pin the servo is attached to.
   patterServo.write(servoUpPos);  // make sure servo starts in the starting up position.
 }
